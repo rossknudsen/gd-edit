@@ -27,10 +27,6 @@
 
   (:classes gt-character))
 
-(defn ggd-attributes
-  [gt-character]
-  (:attributes gt-character))
-
 (defn ggd-apply-classes
   [gt-character-classes character]
 
@@ -147,31 +143,6 @@
   (contains? (dbu/constellation-star-skill-recordnames-memoized)
              (:skill-name gdc-skill)))
 
-;; Given some equipment definition that comes from gt directly...
-;; Refine an existing already generated item...
-;;
-;; Expects input in the shape of:
-;;
-;; {:item "records/items/gearrelic/d201_relic.dbr",
-;;  :relicBonus "records/items/lootaffixes/completionrelics/aoathkeeper_19a.dbr"}
-(defn gt-equipment-refine
-  "Given some equipment definition that comes from gt directly, refine an existing item.
-  More specifically, make sure we are using the exact prefix and suffix"
-  [gt-character-data-equipment item]
-
-  (let [mappings {:item :basename
-                  :prefix :prefix-name
-                  :suffix :suffix-name
-                  :component :relic-name
-                  :augment :augment-name}]
-    (reduce (fn [item [def-k new-val]]
-              (cond-> item
-                  ;; If we know apply a definition onto a field...
-                  (mappings def-k)
-                  ;; Put the new value into the correct corresponding field
-                  (assoc (mappings def-k) new-val)))
-            item
-            gt-character-data-equipment)))
 
 (def weapon-set-path {:weapon1 [:weapon-sets 0 :items 0]
                       :weapon2 [:weapon-sets 0 :items 1]
@@ -287,7 +258,7 @@
     (or (vector? v) (list? v)) (set v)
 
     :else
-    (ex-info "Don't know how to handle relic bonus value of this type!")))
+    (ex-info "Don't know how to handle relic bonus value of this type!" {})))
 
 (defn relic-bonus-v=
   [a b]
@@ -385,8 +356,7 @@
                          (do
                            (println (format "Could not create item matching character level: %d" character-level))
                            (println "Trying again with no level restrictions")
-                           (item/construct-item item-name nil)))
-                  ]
+                           (item/construct-item item-name nil)))]
 
               (cond
 
@@ -398,22 +368,20 @@
                   character)
 
                 :else
-                (do
-                  (let [item (->> item
-                                  (gt-apply-item-augment gt-item)
-                                  (gt-apply-item-relic gt-item)
-                                  (gt-apply-artifact-completion-bonus gt-item))
+                (let [item (->> item
+                                (gt-apply-item-augment gt-item)
+                                (gt-apply-item-relic gt-item)
+                                (gt-apply-artifact-completion-bonus gt-item))
                         ;; Some gt-items may come with specifc prefix and suffix recordnames
-                        item (cond-> item
-                                 (:prefix gt-item) (assoc :prefix-name (:prefix gt-item))
-                                 (:suffix gt-item) (assoc :suffix-name (:suffix gt-item)))
-                        ]
+                      item (cond-> item
+                             (:prefix gt-item) (assoc :prefix-name (:prefix gt-item))
+                             (:suffix gt-item) (assoc :suffix-name (:suffix gt-item)))]
 
-                    ;; Try to place the item onto the character
-                    (if-let [updated-character (place-item-in-inventory character path item)]
+;; Try to place the item onto the character
+                  (if-let [updated-character (place-item-in-inventory character path item)]
                       ;; If the update failed for some reason, just return the original (un-altered) character
-                      updated-character
-                      character))))))
+                    updated-character
+                    character)))))
 
           character gt-character-equipments))
 
@@ -702,23 +670,21 @@
         _ (println)
         _ (println "local save dir seems to be: " save-dir)
 
-        character-dir (io/file save-dir (format "_%s" (:character-name new-character)))
-        ]
+        character-dir (io/file save-dir (format "_%s" (:character-name new-character)))]
 
-    ;; The template directory now contains the new character
+;; The template directory now contains the new character
     ;; Move it to the local save dir now
     (println "Saving character to")
     (println "\t" (.getAbsolutePath character-dir))
     (println)
 
-    (if-not (.renameTo tmp-dir character-dir)
-      (do
-        (println "Moving the directory didn't seem to work...")
-        (println "Copying and overwriting instead...")
-        (fs/copy-dir-into tmp-dir character-dir)
-        (fs/delete-dir tmp-dir)))
+    (when-not (.renameTo tmp-dir character-dir)
+      (println "Moving the directory didn't seem to work...")
+      (println "Copying and overwriting instead...")
+      (fs/copy-dir-into tmp-dir character-dir)
+      (fs/delete-dir tmp-dir))
 
-    (if-not (.exists character-dir)
+    (when-not (.exists character-dir)
       (println "Oops! Unable to save the character to the destination for some reason..."))))
 
 
@@ -730,6 +696,8 @@
   (-> @globals/character
       :skills
       (nth 14))
+
+  (require 'repl)
 
   (let [target-character (repl/load-character-file "DDD")
         ggd-char (json/read-json (slurp (u/expand-home "~/Downloads/charData (4).json")) true)
@@ -789,9 +757,12 @@
   (-> t
       :data)
 
+  (defn load-template-character
+    []
+    (gdc/load-character-file (io/file (io/resource "_blank_character/player.gdc"))))
+
   ;; Make a new character from a template
-  (let [template (gdc/load-character-file (io/file (io/resource "_blank_character/player.gdc")))]
-    (def t (from-ggd-character-file (u/expand-home "~/inbox/charData (4).json") template)))
+  (def t (from-ggd-character-file (u/expand-home "~/inbox/charData (4).json") (load-template-character)))
 
   (let [devotions
 
@@ -815,7 +786,7 @@
   (let [character (-> (au/locate-character-files "Odie")
                       first
                       gdc/load-character-file
-                      remove-all-skills)]
+                      skill/skills-remove-all)]
     character)
 
   (->> (range 10)
@@ -823,11 +794,6 @@
 
   (let [a-map {:skills [:a :b :c :d :e :f :g]}]
     (s/transform [:skills] (fn [v] (take 5 v)) a-map))
-
-  (do
-    (reset! globals/character
-            (from-ggd-character-file "~/inbox/testChar-formatted.json"))
-    :ok)
 
   (:skills @globals/character)
 
@@ -841,18 +807,20 @@
          (s/select [s/ALL :children])
          (apply concat gt-character-skills)))
 
-  (:equipment (from-ggd-character-file (u/expand-home "~/inbox/testChar-formatted.json")))
+  (:equipment (from-ggd-character-file (u/expand-home "~/inbox/testChar-formatted.json") (load-template-character)))
 
-  (-> (from-ggd-character-file (u/expand-home "~/inbox/testChar-formatted.json"))
+  (-> (from-ggd-character-file (u/expand-home "~/inbox/testChar-formatted.json") (load-template-character))
       (gdc/write-character-file (u/expand-home "~/inbox/out.gdc")))
 
   (def j (load-ggd-file "~/Dropbox/Public/GrimDawn/gd-chars/xZyBgRqN.json"))
 
-  (create-character (u/expand-home "~/Dropbox/Public/GrimDawn/gd-chars/xZyBgRqN.json"))
+  (time
+   (create-character (u/expand-home "~/Dropbox/Public/GrimDawn/gd-chars/xZyBgRqN.json")))
 
   (dbu/record-by-name "records/skills/devotion/tier1_08e_skill.dbr")
 
   (require 'repl)
+
   (repl/init)
 
   (repl/cmd "load AAA")
@@ -946,24 +914,16 @@
 
   (let [offset 0
         char1 (as-> (repl/load-character-file "AAA") $
-                  (dissoc $ :meta-block-list)
-                  (:skills $)
-                  (sort-by :skill-name $)
-                  ;; (drop offset $)
-                  )
-        char2 (as-> (repl/load-character-file "target") $
                 (dissoc $ :meta-block-list)
                 (:skills $)
                 (sort-by :skill-name $)
                 ;; (drop offset $)
                 )
-        ]
+        char2 (as-> (repl/load-character-file "target") $
+                (dissoc $ :meta-block-list)
+                (:skills $)
+                (sort-by :skill-name $)
+                ;; (drop offset $)
+                )]
     (->> (clojure.data/diff char1 char2)
-         (take 2)
-        )
-
-    )
-
-
-
-  )
+         (take 2))))
