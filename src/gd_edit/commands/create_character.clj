@@ -54,7 +54,10 @@
                     (assoc :cunning (:cunning gt-character-attributes))
 
                     (:spirit gt-character-attributes)
-                    (assoc :spirit (:spirit gt-character-attributes)))]
+                    (assoc :spirit (:spirit gt-character-attributes))
+
+                    (:devotionPoints gt-character-attributes)
+                    (assoc :devotion-points (:devotionPoints gt-character-attributes)))]
 
     (update character :attribute-points #(dbu/coerce-to-type
                                           (max (- %
@@ -377,7 +380,7 @@
                              (:prefix gt-item) (assoc :prefix-name (:prefix gt-item))
                              (:suffix gt-item) (assoc :suffix-name (:suffix gt-item)))]
 
-;; Try to place the item onto the character
+                  ;; Try to place the item onto the character
                   (if-let [updated-character (place-item-in-inventory character path item)]
                       ;; If the update failed for some reason, just return the original (un-altered) character
                     updated-character
@@ -401,15 +404,30 @@
                   :prefix :prefix-name
                   :suffix :suffix-name
                   :component :relic-name
-                  :augment :augment-name}]
-    (reduce (fn [item [def-k new-val]]
-              (cond-> item
+                  :augment :augment-name
+                  :relicBonus :relic-bonus}
+
+        ;; Translate the gt equipment into a gdc item
+        item (reduce (fn [item [def-k new-val]]
+                       (cond-> item
                   ;; If we know apply a definition onto a field...
-                  (mappings def-k)
+                         (mappings def-k)
                   ;; Put the new value into the correct corresponding field
-                  (assoc (mappings def-k) new-val)))
-            item
-            gt-character-data-equipment)))
+                         (assoc (mappings def-k) new-val)))
+                     item
+                     gt-character-data-equipment)]
+
+    ;; Update the seeds if need be
+    (cond-> item
+      :always
+      (assoc :seed (rand-int Integer/MAX_VALUE))
+
+      (:augment-name item)
+      (assoc :augment-seed (rand-int Integer/MAX_VALUE))
+
+      (:relic-name item)
+      (assoc :relic-seed (rand-int Integer/MAX_VALUE)))))
+
 
 (defn gt-apply-equipment-refine
   [gt-character-data-equipments character]
@@ -419,6 +437,8 @@
               (update-in character path #(gt-equipment-refine item-def %))))
           character
           gt-character-data-equipments))
+
+(def gt-apply-equipment gt-apply-equipment-refine)
 
 (defn find-skill-idx-by-recordname
   [character skill-recordname]
@@ -628,20 +648,12 @@
                        (gt-apply-attributes (:bio gt-character))
 
                        (gt-apply-skills (:skills gt-character))
-                       ;; (ggd-apply-devotions (:devotionNodes ggd-character))
                        (println-passthrough-last "")
 
-                       (ggd-apply-equipment (:items ggd-character))
+                       (gt-apply-equipment (:equipment gt-character))
                        (cap-min-to-zero :attribute-points)
                        (cap-min-to-zero :skill-points))]
-    (cond->> character
-      ;; If we have some equipment data that comes directly from grimtools...
-      ;; Apply the exact records that should be used for the equipment
-      (:equipment gt-character)
-      (gt-apply-equipment-refine (:equipment gt-character))
-      ;; (:skills gt-character)
-      ;; (gt-apply-skill-refine (:skills gt-character))
-      )))
+    character))
 
 
 (defn create-character
@@ -815,7 +827,11 @@
   (def j (load-ggd-file "~/Dropbox/Public/GrimDawn/gd-chars/xZyBgRqN.json"))
 
   (time
-   (create-character (u/expand-home "~/Dropbox/Public/GrimDawn/gd-chars/xZyBgRqN.json")))
+   (create-character (u/expand-home "~/Dropbox/Public/GrimDawn/gt-chars/xZyBgRqN.json")))
+
+  (json/read-json (slurp (u/expand-home "~/Dropbox/Public/GrimDawn/gt-chars/xZyBgRqN.json")) true)
+
+  (spit (u/expand-home "~/Dropbox/Public/GrimDawn/gt-chars/xZyBgRqN.json") (json/write-str t))
 
   (dbu/record-by-name "records/skills/devotion/tier1_08e_skill.dbr")
 
@@ -874,23 +890,7 @@
   (gt-apply-artifact-completion-bonus
    (-> j
        :items
-       last)
-
-   {:stack-count 1,
-    :basename (:recordname t)
-    :unknown 0
-    :relic-seed 0
-    :prefix-name ""
-    :relic-completion-level 0
-    :seed 1699262392
-    :augment-seed 0
-    :transmute-name ""
-    :augment-name ""
-    :modifier-name ""
-    :relic-name ""
-    :suffix-name ""
-    :attached true
-    :relic-bonus ""})
+       last))
 
   (do
     (def j
@@ -910,7 +910,8 @@
                   (dissoc :meta-block-list))
         char2 (-> (repl/load-character-file "target")
                   (dissoc :meta-block-list))]
-    (clojure.data/diff char1 char2))
+    (->> (clojure.data/diff char1 char2)
+         drop-last))
 
   (let [offset 0
         char1 (as-> (repl/load-character-file "AAA") $
