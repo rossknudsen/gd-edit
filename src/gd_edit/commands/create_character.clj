@@ -19,7 +19,9 @@
             [gd-edit.printer :as printer]
             [gd-edit.db-query :as query]
             [clojure.string :as str]
-            [clojure.data]))
+            [clojure.data]
+            [gd-edit.gt-character-spec :as gt-char-spec]
+            [clojure.spec.alpha :as spec]))
 
 
 (defn ggd-classes
@@ -631,29 +633,40 @@
       (:skills gt-character)
       (gt-apply-skill-refine (:skills gt-character)))))
 
+
+(defn gt-apply-character
+  [gt-character template-character]
+
+  ;; Apply various settings from the json character file
+  (->> template-character
+       skill/skills-remove-all
+       prompt-set-character-name
+       (set-character-level (str (get-in gt-character [:bio :level])))
+       (println-passthrough-last "")
+
+       (gt-apply-attributes (:bio gt-character))
+
+       (gt-apply-skills (:skills gt-character))
+       (println-passthrough-last "")
+
+       (gt-apply-equipment (:equipment gt-character))
+       (cap-min-to-zero :attribute-points)
+       (cap-min-to-zero :skill-points)))
+
+
 (defn from-gt-character-file
   [json-file template-character]
+
   (let [;; This is the character we want to end up with
         ggd-character (json/read-json (slurp json-file) true)
 
-        gt-character (:data ggd-character)
+        gt-character (:data ggd-character)]
 
-        ;; Apply various settings from the json character file
-        character (->> template-character
-                       skill/skills-remove-all
-                       prompt-set-character-name
-                       (set-character-level (str (get-in gt-character [:bio :level])))
-                       (println-passthrough-last "")
-
-                       (gt-apply-attributes (:bio gt-character))
-
-                       (gt-apply-skills (:skills gt-character))
-                       (println-passthrough-last "")
-
-                       (gt-apply-equipment (:equipment gt-character))
-                       (cap-min-to-zero :attribute-points)
-                       (cap-min-to-zero :skill-points))]
-    character))
+    (if-not (spec/valid? :gt-char/data gt-character)
+      (do
+        (println "Input doesn't look like a valid grimtools character file")
+        template-character)
+      (gt-apply-character gt-character template-character))))
 
 
 (defn create-character
@@ -927,4 +940,6 @@
                 ;; (drop offset $)
                 )]
     (->> (clojure.data/diff char1 char2)
-         (take 2))))
+         (take 2)))
+
+  :last-line)
