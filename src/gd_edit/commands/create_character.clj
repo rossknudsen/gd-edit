@@ -654,29 +654,13 @@
        (cap-min-to-zero :skill-points)))
 
 
-(defn from-gt-character-file
-  [json-file template-character]
 
-  (let [;; This is the character we want to end up with
-        ggd-character (json/read-json (slurp json-file) true)
-
-        gt-character (:data ggd-character)]
-
-    (if-not (spec/valid? :gt-char/data gt-character)
-      (do
-        (println "Input doesn't look like a valid grimtools character file")
-        template-character)
-      (gt-apply-character gt-character template-character))))
-
-
-(defn create-character
+(defn create-character-
   "Take the json file, recreate the character using a template, then move the character to
   the local save directory
   "
-  [json-filepath]
-  (let [json-file (io/file json-filepath)
-
-        ;; Copy the template character directory to a temporary location on disk
+  [gt-character-root]
+  (let [;; Copy the template character directory to a temporary location on disk
         tmp-dir (fs/temp-dir "gd-edit-char")
         _ (u/copy-resource-files-recursive "_blank_character" tmp-dir)
 
@@ -685,7 +669,7 @@
         template-character (gdc/load-character-file character-file)
 
         ;; Create a new character from the template
-        new-character (from-gt-character-file json-file template-character)
+        new-character (gt-apply-character (:data gt-character-root) template-character)
 
         ;; Save it back into the template files directory
         _ (gdc/write-character-file new-character character-file)
@@ -697,7 +681,7 @@
 
         character-dir (io/file save-dir (format "_%s" (:character-name new-character)))]
 
-;; The template directory now contains the new character
+    ;; The template directory now contains the new character
     ;; Move it to the local save dir now
     (println "Saving character to")
     (println "\t" (.getAbsolutePath character-dir))
@@ -713,10 +697,73 @@
       (println "Oops! Unable to save the character to the destination for some reason..."))))
 
 
+(defn create-character
+  "Take the json file, recreate the character using a template, then move the character to
+  the local save directory
+  "
+  [gt-character-root]
+  (if-not (spec/valid? :gt-char/root gt-character-root)
+    (do
+      (println "Input doesn't look like a valid grimtools character file")
+      nil)
+    (create-character- gt-character-root))
+  )
+
+(defn create-character-from-str
+  "Take the json file, recreate the character using a template, then move the character to
+  the local save directory
+  "
+  [json-str]
+
+  (-> (json/read-json json-str true)
+      create-character))
+
+(defn create-character-from-file
+  "Take the json file, recreate the character using a template, then move the character to
+  the local save directory
+  "
+  [json-filepath]
+  (-> (slurp json-filepath)
+      create-character-from-str))
+
+(defn extract-character-id
+  [url-or-id]
+
+  (let [regex #"https:\/\/www\.grimtools\.com\/calc\/(.+)\/?"
+        matches (re-matches regex url-or-id)]
+
+    (if matches
+      (second matches)
+      url-or-id)))
+
+(defn fetch-gt-character
+  [character-id]
+  (u/fetch-json-from-url (str "https://www.grimtools.com/get_build_data.php?id=" character-id)))
+
+
+(defn create-character-handler
+  [[_ [url-or-character-id]]]
+
+  (let [character-id (extract-character-id url-or-character-id)
+        _ (println (str "Fetching character: " character-id))
+        [fetch-duration gt-character-json] (u/timed (fetch-gt-character character-id))
+        _ (println (format "fetching took %.2f seconds" (u/nanotime->secs fetch-duration)))]
+    (create-character gt-character-json)))
+
+
 (comment
+  (create-character-handler [nil ["JVljdR7N"]])
+
+  (def t
+    (fetch-gt-character "JVljdR7N"))
+
+  (create-character t)
 
   (find-skill-idx-by-recordname @globals/character
                                 "records/skills/playerclass01/blitz1.dbr")
+
+  (repl/cmd "help")
+  (repl/cmd "make-char JVljdR7N")
 
   (-> @globals/character
       :skills
@@ -745,7 +792,7 @@
 
   (find-skill-idx-by-recordname (repl/load-character-file "DDD") "records/skills/playerclass01/blitz1.dbr")
 
-  )
+  :last-line)
 
 (defn gt-apply-attributes-v2
   [gt-character-attributes character]
@@ -863,7 +910,7 @@
   (repl/cmd "show skills")
   (repl/cmd "level 100")
 
-;;------------------------------------------------------------------------------
+  ;;------------------------------------------------------------------------------
   ;; Relic completion bonus forms
   ;;------------------------------------------------------------------------------
   (def t (relic-search-by-name "Deathchill"))
