@@ -702,12 +702,11 @@
   the local save directory
   "
   [gt-character-root]
-  (if-not (spec/valid? :gt-char/root gt-character-root)
+  (if-not (spec/valid? :gt-char/data (:data gt-character-root))
     (do
       (println "Input doesn't look like a valid grimtools character file")
       nil)
-    (create-character- gt-character-root))
-  )
+    (create-character- gt-character-root)))
 
 (defn create-character-from-str
   "Take the json file, recreate the character using a template, then move the character to
@@ -887,7 +886,14 @@
   (def j (load-ggd-file "~/Dropbox/Public/GrimDawn/gd-chars/xZyBgRqN.json"))
 
   (time
-   (create-character (u/expand-home "~/Dropbox/Public/GrimDawn/gt-chars/xZyBgRqN.json")))
+   (-> (u/expand-home "~/Dropbox/Public/GrimDawn/gt-chars/xZyBgRqN.json")
+       u/load-json-file
+       create-character))
+
+  (time
+   (-> (u/expand-home "~/Dropbox/Public/GrimDawn/gd-chars/xZyBgRqN.json")
+       u/load-json-file
+       create-character))
 
   (json/read-json (slurp (u/expand-home "~/Dropbox/Public/GrimDawn/gt-chars/xZyBgRqN.json")) true)
 
