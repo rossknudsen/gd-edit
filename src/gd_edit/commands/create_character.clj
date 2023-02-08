@@ -694,7 +694,9 @@
       (fs/delete-dir tmp-dir))
 
     (when-not (.exists character-dir)
-      (println "Oops! Unable to save the character to the destination for some reason..."))))
+      (println "Oops! Unable to save the character to the destination for some reason..."))
+
+    (io/file character-dir "player.gdc")))
 
 
 (defn create-character
@@ -746,8 +748,12 @@
   (let [character-id (extract-character-id url-or-character-id)
         _ (println (str "Fetching character: " character-id))
         [fetch-duration gt-character-json] (u/timed (fetch-gt-character character-id))
-        _ (println (format "fetching took %.2f seconds" (u/nanotime->secs fetch-duration)))]
-    (create-character gt-character-json)))
+        _ (println (format "fetching took %.2f seconds" (u/nanotime->secs fetch-duration)))
+        character-filepath (create-character gt-character-json)]
+
+    (println)
+    (println "Loading newly created character...")
+    (au/load-character-file character-filepath)))
 
 
 (comment
