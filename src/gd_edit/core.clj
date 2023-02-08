@@ -124,7 +124,8 @@
    ["batch" "character"]    (fn [input] (commands.batch/batch-character-handler input))
    ["swap-variant"] (fn [input] (commands.item/swap-variant-handler input))
    ["shrine" "list"] (fn [input] (commands.shrine/shrine-list-handler input))
-   ["gate" "list"] (fn [input] (commands.shrine/gate-list-handler input))})
+   ["gate" "list"] (fn [input] (commands.shrine/gate-list-handler input))
+   ["make-char"] (fn [input] (commands.create-character/create-character-handler input))})
 
 (defn- find-command
   "Try to find the \"longest\" command match"
@@ -643,7 +644,7 @@
 
        (not-empty arguments) (when (str/ends-with? (first arguments) ".json")
                                (initialize)
-                               (commands.create-character/create-character (first arguments))
+                               (commands.create-character/create-character-from-file (first arguments))
                                (System/exit 0))
 
        ;; If the user asked to start the editor in batch mode...

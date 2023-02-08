@@ -48,8 +48,7 @@
                " q recordname~weapons/blunt1h order offensivePhysicalMax"
                ""
                " Normally, the returned results are ordered by their recordname. However, you"
-               " can ask the editor to order the results by any field you'd like ."
-               ])]
+               " can ask the editor to order the results by any field you'd like ."])]
 
    ["qshow" "Show the next page in the query result"]
    ["qn"    "Alias for qshow"]
@@ -76,8 +75,7 @@
                ""
                "Lastly, each 'component' in the path can be partially matched, so you don't have"
                "to enter the exact path all the time. It works as long as you supply enough of"
-               "the component to uniquely identify a directory or record."
-               ])]
+               "the component to uniquely identify a directory or record."])]
 
    ["show"  "Explore the save file data"
     (str/join "\n"
@@ -107,8 +105,7 @@
                ""
                " The 'equipment' field is a collection of 12 items. This command says to show"
                " only the first item. When display an item, the editor will show the full name"
-               " of the item as well as any related db records."
-               ])]
+               " of the item as well as any related db records."])]
 
    ["ls"  "Alias for \"show\""]
 
@@ -142,8 +139,7 @@
                " to just supply the name of the item you want. The editor will try its best to"
                " figure the right combination of basename, prefix, and suffix. It also takes"
                " into consideration of the character that has currently been loaded."
-               " "
-               ])]
+               " "])]
 
    ["remove" "Removes an item from the specified collection"
     (str/join "\n"
@@ -157,8 +153,7 @@
                "Example 2:"
                " remove inv/0/items/*"
                ""
-               " This removes all the items in the first inventory bag"
-               ])]
+               " This removes all the items in the first inventory bag"])]
 
    ["rm" "Alias for \"remove\""]
 
@@ -196,15 +191,13 @@
                "|"
                "| Tonic of Mending: inventory-sacks/0/inventory-items/0"
                ""
-               "> set inventory-sacks/0/inventory-items/0/stack-count 99"
-               ])]
+               "> set inventory-sacks/0/inventory-items/0/stack-count 99"])]
    ["find all" "Find some character data by name in all locatable characters"
     (str/join "\n"
               ["Syntax: find all <a-name>"
                ""
                "This command works in the same way as 'find' except it will look through"
-               "all characters that the editor is able to locate."
-               ])]
+               "all characters that the editor is able to locate."])]
    ["load"  "Load from a save file"
     (str/join "\n"
               ["Load a character file"
@@ -224,8 +217,7 @@
                ""
                "Syntax 3: load \"C:\\Users\\<userdir>\\Documents\\my games\\Grim Dawn\\save\\main\\_Odie\\player.gdc\""
                ""
-               "Loads the character at the specified path."
-               ])]
+               "Loads the character at the specified path."])]
    ["write" "Writes out the character that is currently loaded"
     (str/join "\n"
               ["Syntax: write"
@@ -274,8 +266,7 @@
                " attributes - refund all attribute points spent"
                " skills - remove all masteries & skills and refund skill points spent"
                " devotions - remove all devotions and refund devotion points spent"
-               " all - combination of all of the above"
-               ])]
+               " all - combination of all of the above"])]
    ["update" "Update to the latest version of gd-edit"]
    ["swap-variant" "Swap the item out for one of its variants"
     (str/join "\n"
@@ -301,8 +292,7 @@
     (str/join "\n"
               ["Syntax: batch character <path-to-batch-file>"
                ""
-               "Load each character file found by the editor, run the commands indicated by the batch file, then write the character file before proceeding to the next character."])
-    ]
+               "Load each character file found by the editor, run the commands indicated by the batch file, then write the character file before proceeding to the next character."])]
 
    ["batch item" "Batch creates several copies of the specified item"
     (str/join "\n"
@@ -314,7 +304,14 @@
                "Note that the expected parameters are the same as the item creation variant of \"set\"."])]
 
    ["shrine list" "Lists all known shrines"]
-   ["gate list" "Lists all known rift gates"]])
+   ["gate list" "Lists all known rift gates"]
+   ["make-char" "Make a local character using a GrimTools character"
+    (str/join "\n"
+              ["Syntax: make-char <character-url-or-id>"
+               ""
+               "Ex: "
+               "  make-char https://www.grimtools.com/calc/JVljdR7N"
+               "  make-char JVljdR7N"])]])
 
 (defn detail-help-text
   [help-item]

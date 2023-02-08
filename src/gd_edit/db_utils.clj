@@ -626,6 +626,15 @@
        (map constellationr-record->skills-map)
        (apply merge)))
 
+(defn constellation-star-skill-recordnames
+  []
+  (->> (constellation-skills-map)
+       vals
+       (map record-by-name)
+       (map #(get % "skillName"))
+       set))
+
+(def constellation-star-skill-recordnames-memoized (memoize constellation-star-skill-recordnames))
 
 (defn devotion-skill-descriptor-by-recordname
   "Fetch a a record that actually looks like a structure that describes a skill.
@@ -650,3 +659,40 @@
 
      ;; Otherwise, just return the record
      record)))
+
+(defn devotion-skill-descriptor-by-record
+  "Fetch a a record that actually looks like a structure that describes a skill.
+
+  There are records in the database that are actually references to other skills.
+
+  So instead of the expected:
+  [skill name lookup] => [structure describing a skill]
+
+  We might actually have:
+  [skill name lookup] => [dummy buff skill record] => [structure describing a skill]
+
+  This function follows that indirection to always return a structure describing a skill.
+  "
+  [skill-record]
+
+  (or
+   ;; If we seem to have arrived at a dummy buff skill record, continue the lookup
+   (when (get skill-record "buffSkillName")
+     (record-by-name (get skill-record "buffSkillName")))
+
+   ;; Otherwise, just return the record
+   skill-record))
+
+(defn celestial-power-recordnames
+  []
+  (->> (constellation-skills-map)
+       vals
+       (map record-by-name)
+       (map #(get % "skillName"))
+       (filter (fn [skill-recordname]
+                 (let [record (devotion-skill-descriptor-by-recordname skill-recordname)]
+                   (and (get record "skillDisplayName")
+                        (get record "skillExperienceLevels")))))
+       set))
+
+(def celestial-power-recordnames-memoized (memoize celestial-power-recordnames))
