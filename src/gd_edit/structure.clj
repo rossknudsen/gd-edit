@@ -496,5 +496,7 @@
 
   ;; Send the currently read data to the cond-fn to retrieve the spec to be used
   (when-let [spec (cond-fn data context)]
+    (when *debug*
+      (println "conditional => " spec))
     ;; write the data using the retrieved spec if any
     (write-spec spec bb data context)))

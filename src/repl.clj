@@ -174,13 +174,19 @@
 
   (cmd "batch character b/do-this")
 
-  (load-character "Odie")
+  (binding [gd-edit.io.gdc/*debug* true]
+    (load-character "xyz"))
+
+  (binding [gd-edit.io.gdc/*debug* true]
+    (load-character "Shocker"))
+
+  (load-character "Shocker")
 
   (cmd "delete OdieTest")
 
   (write-character-file @globals/character "/tmp/player.gdc")
 
-  (cmd "show character-name")
+  (cmd "show 14-")
 
   (cmd "show skills")
 
@@ -192,7 +198,6 @@
 
   (u/timed-readable
    (cmd "set inv/1/items \"Hydra bow\""))
-
 
   (let [loot-masters (->> (db)
                           (filter #(= "LootMasterTable" (get % "Class"))))]
@@ -282,7 +287,6 @@
         ;;                   (assoc :last-monster-hit-DA 0.0)
         ;;                   (assoc :last-monster-hit-OA 0.0)
 
-
         ;;                   (assoc :experience-from-kills 0)
         ;;                   (assoc :one-shot-chests-unlocked 0)
 
@@ -325,8 +329,6 @@
     ;; (diff updated-char1 char2)
     ;; (diff char1 char2)
     )
-
-
   (let [char1 (-> (load-character-file (io/file (io/resource "_blank_character/player.gdc")))
                   (dissoc :meta-block-list))
         char2 (-> (load-character-file (io/file (io/resource "blank-character.gdc")))
@@ -346,14 +348,12 @@
 
   (cmd "write")
 
-
   (cmd "q value~\"Coven Black Ash\"")
 
   (cmd "q value~\"records/items/enchants/a02a_enchant.dbr\"")
 
   (cmd "q value~\"Aether Soul\"")
   (cmd "q value=\"Lotus\"")
-
 
   (->> (dbu/db)
        (filter #(= (get % "Class") "ItemEnchantment"))
@@ -362,9 +362,6 @@
 
        ;; (map :recordname)
        )
-
-
-
   (dbu/record-by-name
    "records/items/enchants/c102a_enchant.dbr")
 
@@ -383,7 +380,6 @@
 
   (->> (dbu/relics)
        keys)
-
 
   (cmd "db records/ui/skills/devotion/constellations/")
 
@@ -406,4 +402,15 @@
 
   (cmd "show attribute-points")
 
+  ;; Make sure writing reading then writing results in a file identical to the original
+  (let [modified-file (java.io.File/createTempFile "savefile" ".gdc")
+        orig-file (resolve-save-file "Odie")
+        character (load-character-file orig-file)]
+
+    (write-character-file character modified-file)
+    (if (= (u/md5-file orig-file) (u/md5-file modified-file))
+      (println "Identical")
+      (println "Not Identical")))
+
+;; end
   )

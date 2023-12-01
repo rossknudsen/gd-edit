@@ -452,7 +452,10 @@
                                  (s/array HotSlot :length 36)
                                  :else
                                  (s/array HotSlot :length 46))))
-   :camera-distance        :float))
+   :camera-distance        :float
+
+   :14-unk1                (after-block-version 5 :int32)
+   {:anchor true}))
 
 (def Block15
   (s/struct-def
