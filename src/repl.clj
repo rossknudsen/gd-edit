@@ -412,5 +412,13 @@
       (println "Identical")
       (println "Not Identical")))
 
+  (cmd "make-char https://www.grimtools.com/calc/4VxvEXbN")
+
+  (binding [gd-edit.io.gdc/*debug* true]
+    (cmd "load Odie"))
+
+  (binding [gd-edit.io.gdc/*debug* true]
+    (cmd "load Shocker"))
+
 ;; end
   )

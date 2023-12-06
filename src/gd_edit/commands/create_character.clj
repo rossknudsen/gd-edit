@@ -1001,4 +1001,15 @@
     (->> (clojure.data/diff char1 char2)
          (take 2)))
 
+  (binding [gd-edit.io.gdc/*debug* true]
+    (let [;; Copy the template character directory to a temporary location on disk
+          tmp-dir (fs/temp-dir "gd-edit-char")
+          _ (u/copy-resource-files-recursive "_blank_character" tmp-dir)
+
+        ;; Load the template directory
+          character-file (io/file tmp-dir "player.gdc")
+          template-character (gdc/load-character-file character-file)]
+
+      :ok))
+
   :last-line)
