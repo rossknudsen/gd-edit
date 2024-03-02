@@ -353,7 +353,9 @@
    :masteries-allowed          :int32
    :skill-points-reclaimed     :int32
    :devotion-points-reclaimed  :int32
-   :item-skills                (s/array ItemSkill)))
+   :item-skills                (s/array ItemSkill)
+   :8-unk1                     (after-block-version 6 :int32)
+   {:anchor true}))
 
 (def Block12
   (s/struct-def
@@ -444,6 +446,10 @@
                              :secondary-skill (s/string :ascii)
                              :skill-active    :bool)
                             :length 5)
+
+   :14-unk2                 (after-block-version 7 :int32)
+   :14-unk3                 (after-block-version 7 :int32)
+   :14-unk4                 (after-block-version 7 :int32)
 
    :hotslots                (s/conditional
                              (fn [data _]
