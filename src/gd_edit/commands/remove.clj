@@ -41,6 +41,13 @@
                         [([:weapon-sets _ :items _] :seq)] :fixed-length
                         :else :ok)]
         (cond
+          ;; Want to remove the contents of a whole array?
+          (and all?
+               (sequential? target))
+          (do
+            (swap! globals/character #(s/transform actual-path empty %))
+            (u/print-line (yellow (format "Removed %d items from \"%s\"" (count target) (u/keywords->path target-path)))))
+
           (map? parent)
           (u/print-line (red "Sorry,") "a structure field cannot be removed")
 
@@ -49,13 +56,6 @@
 
           (boolean? target)
           (u/print-line (red "Sorry,") "can't target a boolean for removal")
-
-          ;; Want to remove the contents of a whole array?
-          (and all?
-               (sequential? target))
-          (do
-            (swap! globals/character #(s/transform actual-path empty %))
-            (u/print-line (yellow (format "Removed %d items from \"%s\"" (count target) (u/keywords->path target-path)))))
 
           ;; Can't remove the array itself
           (sequential? target)
