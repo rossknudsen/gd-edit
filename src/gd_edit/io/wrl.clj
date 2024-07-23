@@ -18,7 +18,7 @@
 
   (when (or (not= (:magic preamble) "WRL")
             (not= (:version preamble) 9))
-    (throw (Throwable. "I don't understand this wrl format!"))))
+    (throw (Throwable. "I don't understand this WRL format!"))))
 
 
 (def SectionHeader

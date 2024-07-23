@@ -36,7 +36,7 @@
 
   (when (or (not= (:magic preamble) "MAP")
             (not= (:version preamble) 8))
-    (throw (Throwable. "I don't understand this wrl format!"))))
+    (throw (Throwable. "I don't understand this MAP format!"))))
 
 (def sector-id-map
   {1 :region

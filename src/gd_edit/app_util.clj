@@ -11,7 +11,8 @@
             [gd-edit.io.gdc :as gdc]
             [gd-edit.quest :as quest]
             [gd-edit.watcher :as watcher]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [jansi-clj.core :refer [red]]))
 
 (defn character-loaded?
   []
@@ -82,12 +83,26 @@
 
 (defn load-shrines-and-gates
   []
-  (->> (dirs/get-file-and-overrides dirs/level-file)
-       (map map-reader/load-shrines-and-rift-gates)
-       (apply merge)
-       vals
-       flatten
-       distinct))
+  (try
+    (->> (dirs/get-file-and-overrides dirs/level-file)
+         (map map-reader/load-shrines-and-rift-gates)
+         (apply merge)
+         vals
+         flatten
+         distinct)
+    ;; If we encounter problems loading shrines and gates, just return an empty list.
+    ;;
+    ;; This function is meant to load the srhines and gates in a `future`. If we ever
+    ;; run into problems parsing the level file, due to game updates, any exception
+    ;; would be captured by the future and will be rethrown everytime the value is accessed.
+    ;; This is definitely not what we want.
+    ;; Returning an empty list will at least stop the captured exception from cropping up
+    ;; in random places when the future is accessed.
+    (catch Throwable e
+      (log/error "Ran into problems loading shrines and gate names...")
+      (log/error e)
+      (println (red "Cannot load shrine and gate names..."))
+      (list))))
 
 (defn build-shrines-and-gates-index
   [shrines-and-gates]
