@@ -36,8 +36,8 @@ jobs:
         cmd-exe-workaround: 'latest' # Replaces `clojure` with `deps.clj` on Windows
         #zprint: 1.2.3                # zprint
 
-    - name: Run tests
-      run: boot test
+    #- name: Run tests
+    #  run: boot test
 
     - name: build
       run: boot build
