@@ -24,7 +24,7 @@
         cpath-clj/cpath-clj {:mvn/version "0.1.2"}
         }
  :aliases
- {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.10.5" :git/sha "2a21b7a"}
+ {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}
                  me.raynes/fs {:mvn/version "1.4.6"}
                  com.dropbox.core/dropbox-core-sdk {:mvn/version "5.4.4"}
                  digest/digest {:mvn/version "1.4.5"}
