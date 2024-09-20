@@ -1,4 +1,4 @@
-{:paths ["resources" "src" "classes"]
+{:paths ["." "resources" "src" "classes"]
  :deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/core.match {:mvn/version "1.0.0"}
         org.clojure/core.cache {:mvn/version "1.0.207"}
@@ -24,7 +24,7 @@
         cpath-clj/cpath-clj {:mvn/version "0.1.2"}
         }
  :aliases
- {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.0" :git/sha "8c93e0c"}
+ {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}
                  me.raynes/fs {:mvn/version "1.4.6"}
                  com.dropbox.core/dropbox-core-sdk {:mvn/version "5.4.4"}
                  digest/digest {:mvn/version "1.4.5"}
