@@ -39,7 +39,7 @@ jobs:
     #- name: Run tests
     #  run: boot test
     - name: testInstall
-      run: clojure -T:build build
+      run: clojure -X:build build
 
     - name: build
       run: boot build
